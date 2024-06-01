@@ -2,26 +2,26 @@ package ru.my.spring.boot_security.demo.service;
 
 import org.springframework.stereotype.Service;
 import ru.my.spring.boot_security.demo.entity.Role;
-import ru.my.spring.boot_security.demo.repositoryes.RoleRepositry;
+import ru.my.spring.boot_security.demo.repositoryes.RoleRepository;
 
 import java.util.List;
 
 @Service
 public class RoleServiceImpl implements RoleService {
 
-    private final RoleRepositry roleRepositry;
+    private final RoleRepository roleRepository;
 
-    public RoleServiceImpl(RoleRepositry roleRepositry) {
-        this.roleRepositry = roleRepositry;
+    public RoleServiceImpl(RoleRepository roleRepository) {
+        this.roleRepository = roleRepository;
     }
 
     @Override
     public List<Role> getAllRoles() {
-        return roleRepositry.findAll();
+        return roleRepository.findAll();
     }
 
     @Override
     public void saveRole(Role role) {
-        roleRepositry.save(role);
+        roleRepository.save(role);
     }
 }

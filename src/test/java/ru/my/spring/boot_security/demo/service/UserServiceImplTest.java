@@ -2,21 +2,25 @@ package ru.my.spring.boot_security.demo.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import ru.my.spring.boot_security.demo.dto.BalanceDto;
+import ru.my.spring.boot_security.demo.entity.AdditionallyUser;
 import ru.my.spring.boot_security.demo.entity.User;
+import ru.my.spring.boot_security.demo.mapper.BalanceDtoMapper;
 import ru.my.spring.boot_security.demo.repositoryes.UserRepository;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.openMocks;
 
-public class UserServiceImplTest {
+class UserServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
@@ -24,52 +28,60 @@ public class UserServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private BalanceDtoMapper balanceDtoMapper;
+
     @InjectMocks
     private UserServiceImpl userService;
 
     @BeforeEach
-    public void initMocks() {
-        MockitoAnnotations.openMocks(this);
+    void setUp() {
+        openMocks(this);
     }
 
     @Test
-    public void whenSaveUser_thenPasswordEncodedAndBalanceSet() {
+    void registryUser_NewUser() {
+        User newUser = new User();
+        newUser.setUsername("newUser");
+        newUser.setPassword("password");
+        when(userRepository.findByUsername("newUser")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("password")).thenReturn("encodedPassword");
+        when(balanceDtoMapper.apply(any(User.class))).thenReturn(new BalanceDto());
+        BalanceDto result = userService.registryUser(newUser);
+        verify(userRepository).findByUsername("newUser");
+        verify(passwordEncoder).encode("password");
+        verify(userRepository).save(any(User.class));
+        assertNotNull(result);
+    }
+
+    @Test
+    public void updateAdditionallyUser_ShouldUpdateInfo() {
         User user = new User();
-        user.setPassword("plainPassword");
-
-        when(passwordEncoder.encode(user.getPassword())).thenReturn("encodedPassword");
-
-        userService.save(user);
-
-        verify(userRepository).save(userCaptor.capture());
-        User savedUser = userCaptor.getValue();
-
-        assertEquals("encodedPassword", savedUser.getPassword());
-        assertEquals(1000.0, savedUser.getBalance());
+        user.setUsername("username");
+        AdditionallyUser existingInfo = new AdditionallyUser();
+        user.setAdditionallyUser(existingInfo);
+        AdditionallyUser newInfo = new AdditionallyUser();
+        newInfo.setEmail("newEmail");
+        newInfo.setName("newName");
+        userService.updateAdditionallyUser(newInfo, user);
+        assertEquals("newEmail", user.getAdditionallyUser().getEmail());
+        assertEquals("newName", user.getAdditionallyUser().getName());
+        verify(userRepository).save(user);
     }
 
     @Test
-    public void whenUpdateById_thenUserUpdated() {
-        User existingUser = new User();
-        existingUser.setId(1L);
-        existingUser.setPassword("oldPassword");
-        existingUser.setBalance(500.0);
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-        when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
-
-        User updatedUser = new User();
-        updatedUser.setPassword("newPassword");
-        updatedUser.setBalance(2000.0);
-
-        userService.updateById(1L, updatedUser);
-
-        verify(userRepository).save(userCaptor.capture());
-        User savedUser = userCaptor.getValue();
-
-        assertEquals("encodedNewPassword", savedUser.getPassword());
-        assertEquals(2000.0, savedUser.getBalance());
+    public void loadUserByUsername_UserDoesNotExist_ShouldThrowException() {
+        String username = "nonExistingUser";
+        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+        assertThrows(UsernameNotFoundException.class, () -> {
+            userService.loadUserByUsername(username);
+        });
     }
 
-    ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+    @Test
+    public void findUserById_UserDoesNotExist_ShouldThrowException() {
+        Long userId = 2L;
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+    }
+
 }

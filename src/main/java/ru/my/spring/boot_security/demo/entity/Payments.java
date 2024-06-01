@@ -1,10 +1,18 @@
 package ru.my.spring.boot_security.demo.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.*;
 
 import javax.persistence.*;
-import java.sql.Date;
+import java.time.LocalDateTime;
 
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table
 public class Payments {
@@ -14,7 +22,7 @@ public class Payments {
     private Long id;
 
     @Column(name = "date")
-    private Date date;
+    private LocalDateTime date;
 
     @Column(name = "number")
     private String number;
@@ -26,53 +34,10 @@ public class Payments {
     @OneToOne
     private User user;
 
-    public Payments() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Date getDate() {
-        return date;
-    }
-
-    public void setDate(Date date) {
+    public Payments(LocalDateTime date, String number, Double sum, User user) {
         this.date = date;
-    }
-
-    public String getNumber() {
-        return number;
-    }
-
-    public void setNumber(String number) {
         this.number = number;
-    }
-
-    public Double getSum() {
-        return sum;
-    }
-
-    public void setSum(Double sum) {
         this.sum = sum;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
         this.user = user;
-    }
-
-    @Override
-    public String toString() {
-        return "Payments{" +
-                "id=" + id +
-                '}';
     }
 }

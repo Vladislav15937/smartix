@@ -1,57 +1,89 @@
 package ru.my.spring.boot_security.demo.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.my.spring.boot_security.demo.entity.Payments;
 import ru.my.spring.boot_security.demo.service.PaymentService;
 import ru.my.spring.boot_security.demo.service.UserService;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.security.Principal;
+import java.util.Collections;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 public class PaymentRestControllerTest {
 
-    private PaymentRestController paymentRestController;
+    private MockMvc mockMvc;
+
+    @MockBean
     private UserService userService;
+
+    @MockBean
     private PaymentService paymentService;
 
     @BeforeEach
     public void setUp() {
-        userService = mock(UserService.class);
-        paymentService = mock(PaymentService.class);
-        paymentRestController = new PaymentRestController(userService, paymentService);
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(new PaymentRestController(userService, paymentService))
+                .setCustomArgumentResolvers(pageableArgumentResolver)
+                .build();
     }
 
     @Test
-    public void whenPayByNumber_thenRespondSuccess() {
-
-        Map<String, Double> paymentInfo = new HashMap<>();
-        paymentInfo.put("phoneNumber", 12345.0);
-        paymentInfo.put("amount", 150.0);
-
-        ResponseEntity<String> response = paymentRestController.payByNumber(paymentInfo);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("Счёт мобильного телефона успешно пополнен!", response.getBody());
+    public void whenPayByNumber_thenRespondWithSuccess() throws Exception {
+        String requestBody = "{\"phoneNumber\":\"1234567890\",\"amount\":100.0}";
+        ObjectMapper objectMapper = new ObjectMapper();
+        String string = objectMapper.writeValueAsString("Счёт мобильного телефона успешно пополнен!");
+        mockMvc.perform(post("/payment")
+                        .contentType(MediaType.APPLICATION_JSON_UTF8).characterEncoding("UTF-8")
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(content().string(string));
     }
 
+    @Autowired
+    private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
+
+
     @Test
-    public void whenHistoryPayment_thenReturnPaymentsPage() {
-        Page<Payments> paymentsPage = mock(Page.class);
-        Pageable pageable = mock(Pageable.class);
-        when(paymentService.getPagePayments(pageable)).thenReturn(paymentsPage);
-
-        ResponseEntity<Page<Payments>> response = paymentRestController.historyPayment(pageable);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(paymentsPage, response.getBody());
+    @WithMockUser
+    public void whenHistoryPayment_thenRespondWithPageOfPayments() throws Exception {
+        Page<Payments> paymentsPage = new PageImpl<>(Collections.singletonList(new Payments()));
+        given(paymentService.getPagePaymentsByUserId(any(Principal.class), any(PageRequest.class)))
+                .willReturn(paymentsPage);
+        Principal principal = new Principal() {
+            @Override
+            public String getName() {
+                return "gtnz";
+            }
+        };
+        mockMvc.perform(get("/payment/historyPayment")
+                        .principal(principal))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").exists());
+        verify(paymentService, times(1)).getPagePaymentsByUserId(any(Principal.class),
+                any(PageRequest.class));
     }
 }

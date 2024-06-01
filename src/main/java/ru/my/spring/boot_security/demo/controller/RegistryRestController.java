@@ -1,5 +1,6 @@
 package ru.my.spring.boot_security.demo.controller;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -7,9 +8,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.my.spring.boot_security.demo.dto.BalanceDto;
 import ru.my.spring.boot_security.demo.entity.User;
 import ru.my.spring.boot_security.demo.service.UserService;
 
+@Log4j2
 @RestController
 @RequestMapping("/registry")
 public class RegistryRestController {
@@ -22,8 +25,9 @@ public class RegistryRestController {
     }
 
     @PostMapping
-    public ResponseEntity<HttpStatus> add(@RequestBody User user) {
-        userService.registryUser(user);
-        return ResponseEntity.ok(HttpStatus.OK);
+    public ResponseEntity<BalanceDto> add(@RequestBody User user) {
+        BalanceDto balanceDto = userService.registryUser(user);
+        log.info("пользователь добавлен, или его данные отображены если он уже зарегистрирован");
+        return new ResponseEntity<>(balanceDto, HttpStatus.OK);
     }
 }

@@ -1,5 +1,6 @@
 package ru.my.spring.boot_security.demo.controller;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,8 +14,10 @@ import ru.my.spring.boot_security.demo.service.PaymentService;
 import ru.my.spring.boot_security.demo.service.UserService;
 import ru.my.spring.boot_security.demo.utils.InsufficientFundsException;
 
+import java.security.Principal;
 import java.util.Map;
 
+@Log4j2
 @RestController
 @RequestMapping("/payment")
 public class PaymentRestController {
@@ -28,19 +31,22 @@ public class PaymentRestController {
         this.paymentService = paymentService;
     }
 
-    @PostMapping
-    public ResponseEntity<String> payByNumber(@RequestBody Map<String, Double> map) {
+    @PostMapping(produces = "application/json; charset=UTF-8")
+    public ResponseEntity<String> payByNumber(@RequestBody Map<String, Double> map, Principal principal) {
         try {
-            userService.payByNumber(map);
+            userService.payByNumber(map, principal);
         } catch (InsufficientFundsException e) {
-            throw new RuntimeException(e);
+            return ResponseEntity.ok(e.toString());
         }
-        return ResponseEntity.ok("Счёт мобильного телефона успешно пополнен!");
+        return ResponseEntity.ok("\"Счёт мобильного телефона успешно пополнен!\"");
     }
 
     @GetMapping("/historyPayment")
-    public ResponseEntity<Page<Payments>> historyPayment(@PageableDefault(size = 10, sort = {"id"}, direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<Payments> payments = paymentService.getPagePayments(pageable);
+    public ResponseEntity<Page<Payments>> historyPayment(@PageableDefault(size = 10, sort = {"id"},
+            direction =
+                    Sort.Direction.DESC) Pageable pageable,
+                                                         Principal principal) {
+        Page<Payments> payments = paymentService.getPagePaymentsByUserId(principal, pageable);
         return new ResponseEntity<>(payments, HttpStatus.OK);
     }
 }
