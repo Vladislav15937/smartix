@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table
@@ -33,4 +32,14 @@ public class Payments {
     @JsonIgnore
     @OneToOne
     private User user;
+
+    @Override
+    public String toString() {
+        return "Payments{" +
+                "id=" + id +
+                ", date=" + date +
+                ", number='" + number + '\'' +
+                ", sum=" + sum +
+                '}';
+    }
 }

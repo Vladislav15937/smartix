@@ -1,4 +1,4 @@
-package ru.my.spring.boot_security.demo.service;
+package ru.my.spring.boot_security.demo.service.user.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -10,12 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.my.spring.boot_security.demo.dto.AdditionallyUserDto;
 import ru.my.spring.boot_security.demo.dto.BalanceDto;
 import ru.my.spring.boot_security.demo.dto.RegistryDto;
+import ru.my.spring.boot_security.demo.dto.mapper.AdditionallyUserDtoMapper;
+import ru.my.spring.boot_security.demo.dto.mapper.BalanceDtoMapper;
+import ru.my.spring.boot_security.demo.dto.mapper.UserDtoMapper;
 import ru.my.spring.boot_security.demo.entity.AdditionallyUser;
 import ru.my.spring.boot_security.demo.entity.User;
-import ru.my.spring.boot_security.demo.mapper.AdditionallyUserDtoMapper;
-import ru.my.spring.boot_security.demo.mapper.BalanceDtoMapper;
-import ru.my.spring.boot_security.demo.mapper.UserDtoMapper;
 import ru.my.spring.boot_security.demo.repositoryes.UserRepository;
+import ru.my.spring.boot_security.demo.service.user.UserService;
 
 import java.security.Principal;
 import java.util.Optional;
@@ -47,21 +48,26 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
             return balanceDtoMapper.apply(userDtoMapper.apply(registryDto));
         } else {
-            return balanceDtoMapper.apply(userRepository.findByUsername(registryDto.getLogin()).get());
+            return balanceDtoMapper.apply(userRepository.findByUsername(registryDto.getLogin()).orElseThrow());
         }
     }
 
     @Override
     @Transactional
-    public void addAdditionallyUser(AdditionallyUserDto additionallyUser, Principal principal) {
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+    public boolean addAdditionallyUser(AdditionallyUserDto additionallyUser, Principal principal) {
+        Optional<User> optionalUser = userRepository.findByUsername(principal.getName());
+        if (!optionalUser.isPresent()) {
+            throw new UsernameNotFoundException("Пользователь не найден");
+        }
+        User user = optionalUser.get();
         if (user.getAdditionallyUser() == null) {
             AdditionallyUserDtoMapper additionallyUserDtoMapper = new AdditionallyUserDtoMapper();
-            AdditionallyUser additionallyUser1 = additionallyUserDtoMapper.apply(additionallyUser);
-            additionallyUser1.setUser(userRepository.findByUsername(user.getUsername()).get());
-            user.setAdditionallyUser(additionallyUser1);
+            AdditionallyUser additionallyUserEntity = additionallyUserDtoMapper.apply(additionallyUser);
+            additionallyUserEntity.setUser(user);
+            user.setAdditionallyUser(additionallyUserEntity);
+            userRepository.save(user);
         }
+        return false;
     }
 
     @Override
@@ -87,7 +93,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public BalanceDto showUserDetails(Principal principal) {
         return new BalanceDtoMapper().apply(userRepository
-                .findByUsername(principal.getName()).get());
+                .findByUsername(principal.getName()).orElseThrow());
     }
 
     @Override

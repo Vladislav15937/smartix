@@ -1,4 +1,4 @@
-package ru.my.spring.boot_security.demo.mapper;
+package ru.my.spring.boot_security.demo.dto.mapper;
 
 import ru.my.spring.boot_security.demo.dto.RegistryDto;
 import ru.my.spring.boot_security.demo.entity.User;

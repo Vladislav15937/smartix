@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.my.spring.boot_security.demo.dto.AdditionallyUserDto;
-import ru.my.spring.boot_security.demo.service.UserService;
+import ru.my.spring.boot_security.demo.service.user.UserService;
 
 import java.security.Principal;
 

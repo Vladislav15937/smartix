@@ -6,38 +6,31 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.my.spring.boot_security.demo.dto.AdditionallyUserDto;
-import ru.my.spring.boot_security.demo.entity.AdditionallyUser;
-import ru.my.spring.boot_security.demo.service.UserService;
+import ru.my.spring.boot_security.demo.service.user.UserService;
 
 import java.security.Principal;
-import java.util.Optional;
+import java.sql.Date;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
-public class AdditionallyRestControllerTest {
+@MockitoSettings(strictness = Strictness.LENIENT)
+class AdditionallyRestControllerTest {
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
 
     @Mock
     private UserService userService;
@@ -46,26 +39,31 @@ public class AdditionallyRestControllerTest {
     private AdditionallyRestController additionallyRestController;
 
     @BeforeEach
-    public void setup() {
+    void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(additionallyRestController).build();
-        objectMapper = new ObjectMapper();
     }
 
     @Test
     @WithMockUser(username = "user")
-    public void whenAddAdditionally_thenReturnsSuccess() throws Exception {
-        AdditionallyUserDto additionallyUserDto = new AdditionallyUserDto();
-        doNothing().when(userService).addAdditionallyUser(additionallyUserDto, null);
+    void whenAddAdditionally_thenReturnsSuccess() throws Exception {
+        Principal mockPrincipal = mock(Principal.class);
+        when(mockPrincipal.getName()).thenReturn("username");
+        when(userService.addAdditionallyUser(any(AdditionallyUserDto.class), eq(mockPrincipal))).thenReturn(true);
+        long millis = System.currentTimeMillis();
+        Date date = new Date(millis);
+        AdditionallyUserDto dto = new AdditionallyUserDto("aaa", "aaa", "d", "a", true, date);
         mockMvc.perform(post("/additionally")
+                        .principal(mockPrincipal)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(additionallyUserDto)))
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Данные успешно добавлены!"));
+        verify(userService).addAdditionallyUser(any(AdditionallyUserDto.class), eq(mockPrincipal));
     }
 
     @Test
     @WithMockUser(username = "user")
-    public void whenUpdateAdditionally_thenReturnsUpdated() throws Exception {
+    void whenUpdateAdditionally_thenReturnsUpdated() throws Exception {
         AdditionallyUserDto additionallyUserDto = new AdditionallyUserDto();
         doNothing().when(userService).updateAdditionallyUser(additionallyUserDto, null);
         mockMvc.perform(post("/additionally/update")

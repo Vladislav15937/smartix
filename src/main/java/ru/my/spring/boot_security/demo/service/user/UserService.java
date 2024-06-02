@@ -1,4 +1,4 @@
-package ru.my.spring.boot_security.demo.service;
+package ru.my.spring.boot_security.demo.service.user;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
 import ru.my.spring.boot_security.demo.dto.AdditionallyUserDto;
@@ -15,7 +15,7 @@ public interface UserService extends UserDetailsService {
 
     BalanceDto registryUser(RegistryDto registryDto);
 
-    void addAdditionallyUser(AdditionallyUserDto additionallyUser, Principal principal);
+    boolean addAdditionallyUser(AdditionallyUserDto additionallyUser, Principal principal);
 
     void updateAdditionallyUser(AdditionallyUserDto additionallyUser, Principal principal);
 

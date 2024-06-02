@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.my.spring.boot_security.demo.dto.BalanceDto;
-import ru.my.spring.boot_security.demo.service.UserService;
+import ru.my.spring.boot_security.demo.service.user.UserService;
 
 import java.security.Principal;
 

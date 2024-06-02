@@ -1,4 +1,4 @@
-package ru.my.spring.boot_security.demo.mapper;
+package ru.my.spring.boot_security.demo.dto.mapper;
 
 import org.springframework.stereotype.Service;
 import ru.my.spring.boot_security.demo.dto.BalanceDto;

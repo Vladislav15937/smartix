@@ -11,8 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.my.spring.boot_security.demo.dto.PaymentDto;
 import ru.my.spring.boot_security.demo.entity.Payments;
-import ru.my.spring.boot_security.demo.service.PaymentService;
-import ru.my.spring.boot_security.demo.utils.InsufficientFundsException;
+import ru.my.spring.boot_security.demo.service.payment.PaymentService;
+import ru.my.spring.boot_security.demo.utils.exception.InsufficientFundsException;
 
 import java.security.Principal;
 
@@ -32,10 +32,10 @@ public class PaymentRestController {
     public ResponseEntity<String> payByNumber(@RequestBody PaymentDto paymentDto, Principal principal) {
         try {
             paymentService.payByNumber(paymentDto, principal);
+            return ResponseEntity.ok("\"Счёт мобильного телефона успешно пополнен!\"");
         } catch (InsufficientFundsException e) {
-            return ResponseEntity.ok(e.toString());
+            return (ResponseEntity<String>) ResponseEntity.badRequest();
         }
-        return ResponseEntity.ok("\"Счёт мобильного телефона успешно пополнен!\"");
     }
 
     @GetMapping("/historyPayment")
