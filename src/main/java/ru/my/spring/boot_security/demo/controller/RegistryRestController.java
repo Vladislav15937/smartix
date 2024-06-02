@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.my.spring.boot_security.demo.dto.BalanceDto;
-import ru.my.spring.boot_security.demo.entity.User;
+import ru.my.spring.boot_security.demo.dto.RegistryDto;
 import ru.my.spring.boot_security.demo.service.UserService;
 
 @Log4j2
@@ -25,8 +25,8 @@ public class RegistryRestController {
     }
 
     @PostMapping
-    public ResponseEntity<BalanceDto> add(@RequestBody User user) {
-        BalanceDto balanceDto = userService.registryUser(user);
+    public ResponseEntity<BalanceDto> add(@RequestBody RegistryDto registryDto) {
+        BalanceDto balanceDto = userService.registryUser(registryDto);
         log.info("пользователь добавлен, или его данные отображены если он уже зарегистрирован");
         return new ResponseEntity<>(balanceDto, HttpStatus.OK);
     }

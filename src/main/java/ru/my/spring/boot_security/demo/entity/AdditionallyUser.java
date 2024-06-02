@@ -16,6 +16,15 @@ import java.sql.Date;
 @Table(name = "AdditionallyUser")
 public class AdditionallyUser {
 
+    public AdditionallyUser(String name, String surname, String patronymic, String email, Boolean gender, Date dateOfBirth) {
+        this.name = name;
+        this.surname = surname;
+        this.patronymic = patronymic;
+        this.email = email;
+        this.gender = gender;
+        this.dateOfBirth = dateOfBirth;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

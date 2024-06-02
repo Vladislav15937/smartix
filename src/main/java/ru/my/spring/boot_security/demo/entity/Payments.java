@@ -33,11 +33,4 @@ public class Payments {
     @JsonIgnore
     @OneToOne
     private User user;
-
-    public Payments(LocalDateTime date, String number, Double sum, User user) {
-        this.date = date;
-        this.number = number;
-        this.sum = sum;
-        this.user = user;
-    }
 }

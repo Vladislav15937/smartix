@@ -1,19 +1,24 @@
 package ru.my.spring.boot_security.demo.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import ru.my.spring.boot_security.demo.dto.AdditionallyUserDto;
 import ru.my.spring.boot_security.demo.entity.AdditionallyUser;
 import ru.my.spring.boot_security.demo.service.UserService;
 
@@ -24,13 +29,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest
-@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 public class AdditionallyRestControllerTest {
 
     private MockMvc mockMvc;
+    private ObjectMapper objectMapper;
 
     @Mock
     private UserService userService;
@@ -39,28 +46,32 @@ public class AdditionallyRestControllerTest {
     private AdditionallyRestController additionallyRestController;
 
     @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(additionallyRestController)
-                .build();
+    public void setup() {
+        mockMvc = MockMvcBuilders.standaloneSetup(additionallyRestController).build();
+        objectMapper = new ObjectMapper();
     }
 
     @Test
-    public void testAddAdditionally_UserNotFound() {
-        Principal mockPrincipal = mock(Principal.class);
-        given(mockPrincipal.getName()).willReturn("testUser");
-        when(userService.findByUsername(anyString())).thenReturn(Optional.empty());
-        assertThrows(UsernameNotFoundException.class, () -> {
-            additionallyRestController.addAdditionally(new AdditionallyUser(), mockPrincipal);
-        });
+    @WithMockUser(username = "user")
+    public void whenAddAdditionally_thenReturnsSuccess() throws Exception {
+        AdditionallyUserDto additionallyUserDto = new AdditionallyUserDto();
+        doNothing().when(userService).addAdditionallyUser(additionallyUserDto, null);
+        mockMvc.perform(post("/additionally")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(additionallyUserDto)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Данные успешно добавлены!"));
     }
 
     @Test
-    public void testHandleUserNotFound() {
-        UsernameNotFoundException ex = new UsernameNotFoundException("Пользователь не найден");
-        ResponseEntity<String> response = additionallyRestController.handleUserNotFound(ex);
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Пользователь не найден", response.getBody());
+    @WithMockUser(username = "user")
+    public void whenUpdateAdditionally_thenReturnsUpdated() throws Exception {
+        AdditionallyUserDto additionallyUserDto = new AdditionallyUserDto();
+        doNothing().when(userService).updateAdditionallyUser(additionallyUserDto, null);
+        mockMvc.perform(post("/additionally/update")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(additionallyUserDto)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Данные обновлены!"));
     }
 }

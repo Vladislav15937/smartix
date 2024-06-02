@@ -7,8 +7,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import ru.my.spring.boot_security.demo.dto.BalanceDto;
 import ru.my.spring.boot_security.demo.entity.User;
 import ru.my.spring.boot_security.demo.service.UserService;
 
@@ -37,25 +40,20 @@ public class UserRestControllerTest {
     private UserRestController userRestController;
 
     @BeforeEach
-    public void setUp() {
-        mockMvc = standaloneSetup(userRestController).build();
+    public void setup() {
+        mockMvc = MockMvcBuilders.standaloneSetup(userRestController).build();
     }
 
     @Test
-    public void whenShowUserDetails_thenRespondWithMap() throws Exception {
-        Principal mockPrincipal = mock(Principal.class);
-        given(mockPrincipal.getName()).willReturn("testUser");
-        User testUser = new User();
-        testUser.setUsername("testUser");
-        testUser.setBalance(100.0);
-        given(userService.findByUsername("testUser")).willReturn(Optional.of(testUser));
-        Map<String, Double> userDetails = new HashMap<>();
-        userDetails.put("testUser", 100.0);
+    public void whenShowUserDetails_thenReturnsBalanceDto() throws Exception {
+        Principal principal = mock(Principal.class);
+        BalanceDto balanceDto = new BalanceDto();
+        when(userService.showUserDetails(any(Principal.class))).thenReturn(balanceDto);
         mockMvc.perform(get("/user-data")
-                        .principal(mockPrincipal))
+                        .principal(principal)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().json(asJsonString(userDetails)));
-        verify(userService, times(1)).findByUsername("testUser");
+                .andExpect(content().json(asJsonString(balanceDto)));
     }
 
     public static String asJsonString(final Object obj) {

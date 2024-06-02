@@ -9,32 +9,29 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.my.spring.boot_security.demo.dto.PaymentDto;
 import ru.my.spring.boot_security.demo.entity.Payments;
 import ru.my.spring.boot_security.demo.service.PaymentService;
-import ru.my.spring.boot_security.demo.service.UserService;
 import ru.my.spring.boot_security.demo.utils.InsufficientFundsException;
 
 import java.security.Principal;
-import java.util.Map;
 
 @Log4j2
 @RestController
 @RequestMapping("/payment")
 public class PaymentRestController {
 
-    private final UserService userService;
     private final PaymentService paymentService;
 
     @Autowired
-    public PaymentRestController(UserService userService, PaymentService paymentService) {
-        this.userService = userService;
+    public PaymentRestController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
 
     @PostMapping(produces = "application/json; charset=UTF-8")
-    public ResponseEntity<String> payByNumber(@RequestBody Map<String, Double> map, Principal principal) {
+    public ResponseEntity<String> payByNumber(@RequestBody PaymentDto paymentDto, Principal principal) {
         try {
-            userService.payByNumber(map, principal);
+            paymentService.payByNumber(paymentDto, principal);
         } catch (InsufficientFundsException e) {
             return ResponseEntity.ok(e.toString());
         }

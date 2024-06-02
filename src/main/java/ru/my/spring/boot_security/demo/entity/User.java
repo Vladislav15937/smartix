@@ -2,12 +2,9 @@ package ru.my.spring.boot_security.demo.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
 import java.util.List;
 
 @Setter
@@ -19,11 +16,12 @@ import java.util.List;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "users")
-public class User implements UserDetails {
+public class User {
 
-    public User(String username, String password) {
+    public User(String username, String password, Double balance) {
         this.username = username;
         this.password = password;
+        this.balance = balance;
     }
 
     @Id
@@ -51,35 +49,4 @@ public class User implements UserDetails {
     @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL)
     private List<Payments> payments;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "users_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private List<Role> roles;
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return getRoles();
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
 }

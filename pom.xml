@@ -8,7 +8,7 @@
 		<version>2.6.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>ru.kata</groupId>
+	<groupId>ru.ddd</groupId>
 	<artifactId>spring-boot_security-demo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>spring-boot_security-demo</name>
@@ -25,7 +25,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>1.5.9</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>

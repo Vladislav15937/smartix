@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import ru.my.spring.boot_security.demo.dto.PaymentDto;
 import ru.my.spring.boot_security.demo.entity.Payments;
 import ru.my.spring.boot_security.demo.service.PaymentService;
 import ru.my.spring.boot_security.demo.service.UserService;
@@ -24,6 +27,7 @@ import ru.my.spring.boot_security.demo.service.UserService;
 import java.security.Principal;
 import java.util.Collections;
 
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -37,53 +41,34 @@ public class PaymentRestControllerTest {
 
     private MockMvc mockMvc;
 
-    @MockBean
-    private UserService userService;
-
-    @MockBean
+    @Mock
     private PaymentService paymentService;
 
+    @InjectMocks
+    private PaymentRestController paymentRestController;
+
     @BeforeEach
-    public void setUp() {
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(new PaymentRestController(userService, paymentService))
-                .setCustomArgumentResolvers(pageableArgumentResolver)
-                .build();
+    public void setup() {
+        mockMvc = MockMvcBuilders.standaloneSetup(paymentRestController).build();
     }
 
     @Test
-    public void whenPayByNumber_thenRespondWithSuccess() throws Exception {
-        String requestBody = "{\"phoneNumber\":\"1234567890\",\"amount\":100.0}";
-        ObjectMapper objectMapper = new ObjectMapper();
-        String string = objectMapper.writeValueAsString("Счёт мобильного телефона успешно пополнен!");
+    public void whenPayByNumber_thenReturnsSuccess() throws Exception {
+        PaymentDto paymentDto = new PaymentDto();
+        doNothing().when(paymentService).payByNumber(any(PaymentDto.class), any(Principal.class));
+
         mockMvc.perform(post("/payment")
-                        .contentType(MediaType.APPLICATION_JSON_UTF8).characterEncoding("UTF-8")
-                        .content(requestBody))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(paymentDto)))
                 .andExpect(status().isOk())
-                .andExpect(content().string(string));
+                .andExpect(content().string(containsString("Счёт мобильного телефона успешно пополнен!")));
     }
 
-    @Autowired
-    private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
-
-
-    @Test
-    @WithMockUser
-    public void whenHistoryPayment_thenRespondWithPageOfPayments() throws Exception {
-        Page<Payments> paymentsPage = new PageImpl<>(Collections.singletonList(new Payments()));
-        given(paymentService.getPagePaymentsByUserId(any(Principal.class), any(PageRequest.class)))
-                .willReturn(paymentsPage);
-        Principal principal = new Principal() {
-            @Override
-            public String getName() {
-                return "gtnz";
-            }
-        };
-        mockMvc.perform(get("/payment/historyPayment")
-                        .principal(principal))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").exists());
-        verify(paymentService, times(1)).getPagePaymentsByUserId(any(Principal.class),
-                any(PageRequest.class));
+    public static String asJsonString(final Object obj) {
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

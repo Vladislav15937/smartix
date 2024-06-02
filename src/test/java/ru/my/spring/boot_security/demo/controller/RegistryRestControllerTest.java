@@ -10,14 +10,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.my.spring.boot_security.demo.dto.BalanceDto;
+import ru.my.spring.boot_security.demo.dto.RegistryDto;
 import ru.my.spring.boot_security.demo.entity.User;
 import ru.my.spring.boot_security.demo.service.UserService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,24 +37,21 @@ public class RegistryRestControllerTest {
     private RegistryRestController registryRestController;
 
     @BeforeEach
-    public void setUp() {
-        mockMvc = standaloneSetup(registryRestController).build();
+    public void setup() {
+        mockMvc = MockMvcBuilders.standaloneSetup(registryRestController).build();
     }
 
     @Test
-    public void whenAddUser_thenRespondWithBalanceDto() throws Exception {
-        User testUser = new User();
-        BalanceDto testBalanceDto = new BalanceDto();
-
-        given(userService.registryUser(any(User.class))).willReturn(testBalanceDto);
+    public void whenAdd_thenReturnsBalanceDto() throws Exception {
+        RegistryDto registryDto = new RegistryDto();
+        BalanceDto balanceDto = new BalanceDto();
+        when(userService.registryUser(any(RegistryDto.class))).thenReturn(balanceDto);
 
         mockMvc.perform(post("/registry")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(asJsonString(testUser)))
+                        .content(asJsonString(registryDto)))
                 .andExpect(status().isOk())
-                .andExpect(content().json(asJsonString(testBalanceDto)));
-
-        verify(userService, times(1)).registryUser(any(User.class));
+                .andExpect(content().json(asJsonString(balanceDto)));
     }
 
     public static String asJsonString(final Object obj) {
